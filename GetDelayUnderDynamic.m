@@ -1,7 +1,8 @@
-function [slice_delays, mean_delay, slice_delay_samples] = GetDelayUnderDynamic(duration, capacities, ... 
-    type_demands, workloads, weight_strata, shares, arrival_rates, verbose)
-% The function version of the main script, getting the average delay of
-% different users under a dynamic setting.
+function [sliceDelays, meanDelay, sliceDelaySamples] = getdelayunderdynamic...
+    (duration, capacities, ... 
+    typeDemands, workloads, weightStrata, shares, arrivalRates, verbose)
+% The function getting the average delay of different users under a dynamic 
+% setting.
 % --------------------------------
 % Parameters:
 % --------------------------------
@@ -22,56 +23,59 @@ function [slice_delays, mean_delay, slice_delay_samples] = GetDelayUnderDynamic(
 % Argument checking
 % -----------------------
 B = size(capacities, 1); % num of resources
-T = size(type_demands, 2); % num of types
+T = size(typeDemands, 2); % num of types
 V = size(shares, 1); % num of slices
 
 assert(isequal(size(capacities), [B, 1]));
-assert(isequal(size(type_demands), [B, T]));
+assert(isequal(size(typeDemands), [B, T]));
 assert(isequal(size(workloads), [T, 1]));
 assert(isequal(size(shares), [V, 1]));
-assert(isequal(size(arrival_rates), [V, T]));
-assert(strcmp(weight_strata, 'equal') || strcmp(weight_strata, 'nhops') ...
-    || strcmp(weight_strata, 'nresources') || strcmp(weight_strata, 'inverseresources') ...
-    || strcmp(weight_strata, 'drf') || strcmp(weight_strata, 'pf') ...
-    || strcmp(weight_strata, 'inverseresc-square') || strcmp(weight_strata, 'inverseresc-sqrt'));
+assert(isequal(size(arrivalRates), [V, T]));
+assert(strcmp(weightStrata, 'equal') || strcmp(weightStrata, 'nhops') ...
+    || strcmp(weightStrata, 'nresources') ...
+    || strcmp(weightStrata, 'inverseresources') ...
+    || strcmp(weightStrata, 'drf') ...
+    || strcmp(weightStrata, 'pf') ...
+    || strcmp(weightStrata, 'inverseresc-square') ...
+    || strcmp(weightStrata, 'inverseresc-sqrt'));
 
 if(verbose > 0)
     fprintf('\n');
     disp('Start initialization');
 end
-[event_list, user_demands, user_types, user_slices] = ...
-    initialization(arrival_rates, duration, workloads, type_demands, verbose);
+[eventList, userDemands, userTypes, userSlices] = ...
+    initialization(arrivalRates, duration, workloads, typeDemands, verbose);
 %[event_list, user_demands, user_types, user_slices] = ...
 %    fake_initialization(arrival_rates, duration, inv_workloads, type_demands);
-num_users = size(event_list, 2);
+nUsers = size(eventList, 2);
 cache = containers.Map; % cache of maxmin solution
 if(verbose > 0)
     disp('Finish initialization');
 end
 
-user_rates = zeros(1, num_users); 
+userRates = zeros(1, nUsers); 
 % track current transmission rate each user is perceiving
-user_workloads = zeros(1, num_users); % track remaining workloads
+userWorkloads = zeros(1, nUsers); % track remaining workloads
 
-for u = 1:num_users
-    user_workloads(u) = event_list{u}.workload;
+for u = 1:nUsers
+    userWorkloads(u) = eventList{u}.workload;
 end
-user_active = zeros(1, num_users);
-user_timing = -1 * ones(2, num_users); % -1 = uninitialized
-slice_users = cell(1, V);
-last_time = 0;
+userActive = zeros(1, nUsers);
+userTiming = -1 * ones(2, nUsers); % -1 = uninitialized
+sliceUsers = cell(1, V);
+lastTime = 0;
 
 reverseStr = '';
-while(size(event_list, 2) > 0)
+while(size(eventList, 2) > 0)
     % Update the event and do the allocation
-    [new_event_list, user_rates, user_workloads, user_active, ...
-        user_timing, slice_users, last_time] = ...
-        eventUpdate(event_list, user_rates, user_workloads, user_active, ...
-        weight_strata, user_timing, slice_users, shares, capacities, ...
-        user_demands, last_time, user_types, user_slices, cache);
-    event_list = new_event_list;
+    [newEventList, userRates, userWorkloads, userActive, ...
+        userTiming, sliceUsers, lastTime] = ...
+        eventupdate(eventList, userRates, userWorkloads, userActive, ...
+        weightStrata, userTiming, sliceUsers, shares, capacities, ...
+        userDemands, lastTime, userTypes, userSlices, cache);
+    eventList = newEventList;
     if(verbose > 0)
-        msg = sprintf('Time simulated: %3.1f', last_time);
+        msg = sprintf('Time simulated: %3.1f', lastTime);
         fprintf([reverseStr, msg]);
         reverseStr = repmat(sprintf('\b'), 1, length(msg));
     end
@@ -87,19 +91,19 @@ end
 % departure time of u1   | departure time of u2   | ...
 % ------------------------------------------------------
 
-mean_delay = mean(user_timing(2, :) - user_timing(1, :));
+meanDelay = mean(userTiming(2, :) - userTiming(1, :));
 
 % Get mean delay for each type of users
-user_arrival_time = user_timing(1,:);
-user_departure_time = user_timing(2, :);
-slice_delays = zeros(1, V);
-slice_delay_samples = cell(1, V);
+userArrivalTime = userTiming(1,:);
+userDepartureTime = userTiming(2, :);
+sliceDelays = zeros(1, V);
+sliceDelaySamples = cell(1, V);
 
 for i = 1:V
-    slice_arrival_time = user_arrival_time(user_slices == i);
-    slice_departure_time = user_departure_time(user_slices == i);
-    slice_delay_samples{i} = slice_departure_time - slice_arrival_time;
-    slice_delays(i) = mean(slice_delay_samples{i});
+    sliceArrivalTime = userArrivalTime(userSlices == i);
+    sliceDepartureTime = userDepartureTime(userSlices == i);
+    sliceDelaySamples{i} = sliceDepartureTime - sliceArrivalTime;
+    sliceDelays(i) = mean(sliceDelaySamples{i});
 end
 
 

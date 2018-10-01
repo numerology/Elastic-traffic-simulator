@@ -1,5 +1,20 @@
-function [ rate, lambda ] = maxmin_cached(user_types, weights, capacities, ...
+function [ rate, lambda ] = maxmincached(userTypes, weights, capacities, ...
     demands, cache)
+% Solve the maxmin rate allocation problem under the resource constraint.
+% Cache is used to improve the simulation speed.
+% --------------------------------
+% Parameters:
+% --------------------------------
+% - userTypes : array of user types, 1 x nUsers matrix
+% - weights: array of user weights, nUsers x 1 matrix
+% - capacities: array of resources capacities, 1 x R matrix
+% - demands: resource demands per user, R x nUsers matrix
+% - cache: a map to store existing results
+% --------------------------------
+% Ret:
+% --------------------------------
+% - rate: rate allocation to each user, 1 x nUsers matrix
+% - lambda: redundant, keep for backward comaptibility.
 
 % First need to filter out the zeroes in the input
 non_zero_idx = find(weights);
@@ -9,9 +24,9 @@ filtered_weights = weights(non_zero_idx);
 [tmp, sort_back] = sort(weights_index);
 sorted_demands = demands(:, weights_index);
 
-T = max(user_types);
+T = max(userTypes);
 num_user_types = zeros(1,T);
-for t = user_types
+for t = userTypes
     num_user_types(t) = num_user_types(t) + 1;
 end
 
@@ -21,7 +36,7 @@ if(cache.isKey(key_generated))
     lambda = -1;
     %disp('cache hit');
 else
-    ordered_filtered_rate = maxmin_solve(ordered_filtered_weights, ...
+    ordered_filtered_rate = maxminsolve(ordered_filtered_weights, ...
         capacities, sorted_demands);
     
     assert(all(ordered_filtered_rate >= 0));

@@ -7,15 +7,15 @@
 addpath('../');
 clear;
 capacities = ones(1,1);
-type_demands = [1;1]';
-duration = 200;
-relative_arrival_rates = [1 0; 
+typeDemands = [1;1]';
+duration = 50;
+relativeArrivalRates = [1 0; 
                           0 1];
 verbose = 0;
 workloads = 1 * [1,1]';
-repetition = 200;
-share_vec = 0.1:0.1:0.9;
-T = size(relative_arrival_rates, 2);
+repetition = 10;
+shareVec = 0.1:0.1:0.9;
+T = size(relativeArrivalRates, 2);
 V = 2;
 gcp;
 ppm = ParforProgMon('Progress 1:', repetition);
@@ -24,94 +24,95 @@ ppm = ParforProgMon('Progress 1:', repetition);
 % and 2
 %% 
 disp('testing equal weight alloc');
-result_equal_mat = zeros(repetition, size(share_vec, 2), V);
-delay_samples_1 = cell(repetition, V);
-delay_samples_2 = cell(repetition, V);
+resultEqualMat = zeros(repetition, size(shareVec, 2), V);
+delaySamples1 = cell(repetition, V);
+delaySamples2 = cell(repetition, V);
 parfor i = 1:repetition
-    result_equal = zeros(size(share_vec, 2), V);
-    for share_1 = share_vec
-        [slice_delay, mean_delay, slice_delay_samples] = GetDelayUnderDynamic(duration, capacities, ...
-            type_demands, workloads, 'equal', [share_1, 1 - share_1]', ...
-            0.4 * relative_arrival_rates, verbose);
-        result_equal(share_vec == share_1, :) =  slice_delay;
-        if (share_1 == share_vec(1))
-            delay_samples_1{i, 1} = slice_delay_samples{1};
+    resultEqual = zeros(size(shareVec, 2), V);
+    for share_1 = shareVec
+        [sliceDelay, meanDelay, sliceDelaySamples] = ...
+            getdelayunderdynamic(duration, capacities, ...
+            typeDemands, workloads, 'equal', [share_1, 1 - share_1]', ...
+            0.4 * relativeArrivalRates, verbose);
+        resultEqual(shareVec == share_1, :) =  sliceDelay;
+        if (share_1 == shareVec(1))
+            delaySamples1{i, 1} = sliceDelaySamples{1};
         end
-        if (share_1 == share_vec(end))
-            delay_samples_2{i, 1} = slice_delay_samples{1};
+        if (share_1 == shareVec(end))
+            delaySamples2{i, 1} = sliceDelaySamples{1};
         end
     end
     ppm.increment();
-    result_equal_mat(i, :, 1) = result_equal(:, 1);
+    resultEqualMat(i, :, 1) = resultEqual(:, 1);
 end
 
 
 
 ppm2 = ParforProgMon('Progress 2:', repetition);
 parfor i = 1:repetition
-    result_equal = zeros(size(share_vec, 2), V);
-    for share_1 = share_vec
-        [slice_delay, mean_delay, slice_delay_samples] = GetDelayUnderDynamic(duration, capacities, ...
-            type_demands, workloads, 'equal', [share_1, 1 - share_1]', ...
-            0.4 * relative_arrival_rates, verbose);
-        result_equal(share_vec == share_1, :) =  slice_delay;
-        if (share_1 == share_vec(1))
-            delay_samples_1{i, 2} = slice_delay_samples{2};
+    resultEqual = zeros(size(shareVec, 2), V);
+    for share_1 = shareVec
+        [sliceDelay, meanDelay, sliceDelaySamples] = getdelayunderdynamic(duration, capacities, ...
+            typeDemands, workloads, 'equal', [share_1, 1 - share_1]', ...
+            0.4 * relativeArrivalRates, verbose);
+        resultEqual(shareVec == share_1, :) =  sliceDelay;
+        if (share_1 == shareVec(1))
+            delaySamples1{i, 2} = sliceDelaySamples{2};
         end
-        if (share_1 == share_vec(end))
-            delay_samples_2{i, 2} = slice_delay_samples{2};
+        if (share_1 == shareVec(end))
+            delaySamples2{i, 2} = sliceDelaySamples{2};
         end
     end
     ppm2.increment();
-    result_equal_mat(i, :, 2) = result_equal(:, 2);
+    resultEqualMat(i, :, 2) = resultEqual(:, 2);
 end
 
-result_equal = nanmean(result_equal_mat, 1);
+resultEqual = nanmean(resultEqualMat, 1);
 
 %% Plot normalized service rate
 figure()
 hold on 
 title('Normalized service rate under different shares')
-plot(result_equal(:,:,1), result_equal(:,:,2), 'b+-');
+plot(1./resultEqual(:,:,1), 1./resultEqual(:,:,2), 'b+-');
 xlabel('Slice 1');
 ylabel('Slice 2');
 %% Plot delay
 figure()
 hold on 
 title('Mean delay under different shares')
-plot(result_equal(:,:,1), result_equal(:,:,2), 'b+-');
+plot(resultEqual(:,:,1), resultEqual(:,:,2), 'b+-');
 xlabel('Slice 1');
 ylabel('Slice 2');
 %%
-for share = [share_vec(1) share_vec(end)]
-    delay_vec_1 = [];
+for share = [shareVec(1) shareVec(end)]
+    delayVec1 = [];
     for i = 1:repetition
-        if (share == share_vec(1))
-            delay_vec_1 = [delay_vec_1 delay_samples_1{i, 1}];
+        if (share == shareVec(1))
+            delayVec1 = [delayVec1 delaySamples1{i, 1}];
         end
-        if (share == share_vec(end))
-            delay_vec_1 = [delay_vec_1 delay_samples_2{i, 1}];
+        if (share == shareVec(end))
+            delayVec1 = [delayVec1 delaySamples2{i, 1}];
         end
     end
 
-    delay_vec_2 = [];
+    delayVec2 = [];
     for i = 1:repetition
-        if (share == share_vec(1))
-            delay_vec_2 = [delay_vec_2 delay_samples_1{i, 2}];
+        if (share == shareVec(1))
+            delayVec2 = [delayVec2 delaySamples1{i, 2}];
         end
-        if (share == share_vec(end))
-            delay_vec_2 = [delay_vec_2 delay_samples_2{i, 2}];
+        if (share == shareVec(end))
+            delayVec2 = [delayVec2 delaySamples2{i, 2}];
         end
     end
     
     disp(strcat('Under share 1 = ', num2str(share)))
-    mean_log_delay_1 = mean(log(delay_vec_1))
-    mean_log_delay_2 = mean(log(delay_vec_2))
+    mean_log_delay_1 = mean(log(delayVec1))
+    mean_log_delay_2 = mean(log(delayVec2))
     
     figure()
-    histogram(log(delay_vec_1),30);
+    histogram(log(delayVec1),30);
     hold on
-    histogram(log(delay_vec_2),30);
+    histogram(log(delayVec2),30);
     title(strcat('Histogram of log delay for each slice under share_1 = ', num2str(share)));
     legend('slice 1', 'slice 2')
 end

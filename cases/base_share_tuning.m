@@ -7,12 +7,12 @@ capacities = ones(6,1);
 type_demands = [1 0 0.5 0 0 0; 
                 0 1 0.5 0 0 0; 
                 0 0 0.5 0 0 0.5; 
-                0 0 0 1 0 0.5;
-                0 0 0 0 1 0.5;
+                0 0 0 1 0 0.2;
+                0 0 0 0 1 0.8;
                 0 0 0.5 0 0 0.5]';
 duration = 200;
 relative_arrival_rates = [1 1 0.3 0 0 0; 
-                          0 0 0 1 1 0.3];
+                          0 0 0 0.7 0.7 0.6];
 verbose = 0;
 workloads = 1 * [1,1,1,1,1,1]';
 repetition = 500;
@@ -32,7 +32,7 @@ delay_samples_2 = cell(repetition, V);
 parfor i = 1:repetition
     result_equal = zeros(size(share_vec, 2), V);
     for share_1 = share_vec
-        [slice_delay, mean_delay, slice_delay_samples] = GetDelayUnderDynamic(duration, capacities, ...
+        [slice_delay, mean_delay, slice_delay_samples] = getdelayunderdynamic(duration, capacities, ...
             type_demands, workloads, 'equal', [share_1, 1 - share_1]', ...
             0.4 * relative_arrival_rates, verbose);
         result_equal(share_vec == share_1, :) =  slice_delay;
@@ -53,7 +53,7 @@ ppm2 = ParforProgMon('Progress 2:', repetition);
 parfor i = 1:repetition
     result_equal = zeros(size(share_vec, 2), V);
     for share_1 = share_vec
-        [slice_delay, mean_delay, slice_delay_samples] = GetDelayUnderDynamic(duration, capacities, ...
+        [slice_delay, mean_delay, slice_delay_samples] = getdelayunderdynamic(duration, capacities, ...
             type_demands, workloads, 'equal', [share_1, 1 - share_1]', ...
             0.4 * relative_arrival_rates, verbose);
         result_equal(share_vec == share_1, :) =  slice_delay;
@@ -73,7 +73,7 @@ result_equal = nanmean(result_equal_mat, 1);
 %% Plot normalized service rate
 figure()
 hold on 
-title('Normalized service rate under different shares')
+title('Normalized log service rate under different shares')
 plot(1./result_equal(:,:,1), 1./result_equal(:,:,2), 'b+-');
 xlabel('Slice 1');
 ylabel('Slice 2');

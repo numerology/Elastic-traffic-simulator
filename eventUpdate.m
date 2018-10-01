@@ -1,24 +1,50 @@
-function [new_event_list, new_user_rates, new_user_workloads, ...
-    new_user_active, new_user_timing, new_slice_users, current_time] = eventUpdate( event_list, user_rates, user_workloads,...
-    user_active, weight_strata, user_timing, slice_users, shares, capacities, ...
-    user_demands, last_time, user_types, user_slices, cache)
-%Update the configuration according to the first/earliest event in the
-%event queue
-%   Params are self-explanary
-V = size(slice_users, 2);
-B = size(capacities, 1);
-nUsers = size(user_rates, 2);
+function [newEventList, newUserRates, newUserWorkloads, ...
+    newUserActive, newUserTiming, newSliceUsers, currentTime] = ...
+    eventupdate(eventList, userRates, userWorkloads,...
+    userActive, weightStrata, userTiming, sliceUsers, shares, ...
+    capacities, userDemands, lastTime, userTypes, userSlices, cache)
+% Update the configuration according to the first/earliest event in the
+% event queue.
+% --------------------------------
+% Parameters:
+% --------------------------------
+% - eventList: current list of events to be simulated.
+% - userRates: current rate allcation for each user. 1 x nUsers
+% - userWorkLoads: amount of workloads associated with each user. 1 x
+% nUsers.
+% - userActive: if a user is active currently, 1, otherwise 0. 1 x nUsers.
+% - weightStrate: weighting scheme
+% - userTiming: recording the users departure (first row) and arrival 
+% (second row)time, -1 stands for N/A. 2 x nUsers.
+% - sliceUsers: 1 x V cell array tracking set of user ids under each slice.
+% - shares: 1 x V share allocation vector.
+% - capacities: capacity of each resource. R x 1 
+% - userDemands: R x nUsers matrix tracking demand vector for each users.
+% - lastTime: timestamp of last event processed.
+% - userTypes: 1 x nUsers matrix tracking type of each user.
+% - userSlices: 1 x nUsers tracking the slice id for each user.
+% - cache: cache storing existing optimization result.
+% --------------------------------
+% Ret:
+% --------------------------------
+% new version (after processing the current event) of eventList, userRates,
+% userWorkLoads, userActive, userTiming, sliceUsers and timestamp for this
+% event.
 
-cEvent = event_list{1}; % fetch the first event
-new_user_timing = user_timing;
+V = size(sliceUsers, 2);
+B = size(capacities, 1);
+nUsers = size(userRates, 2);
+
+cEvent = eventList{1}; % fetch the first event
+newUserTiming = userTiming;
 
 if (strcmp(cEvent.tag, 'invalid'))
     % If the event has been revoked. Then return all parameters as they are
-    new_user_rates = user_rates;
-    new_user_workloads = user_workloads;
-    new_user_timing = user_timing;
-    new_slice_users = slice_users;
-    current_time = last_time;
+    newUserRates = userRates;
+    newUserWorkloads = userWorkloads;
+    newUserTiming = userTiming;
+    newSliceUsers = sliceUsers;
+    currentTime = lastTime;
 end
 if (strcmp(cEvent.tag, 'arrival'))
     % When a new customer arrives, add it to the active users set, and
@@ -30,79 +56,78 @@ if (strcmp(cEvent.tag, 'arrival'))
     cType = cEvent.type;
     cSlice = cEvent.slice;
     cWL = cEvent.workload;
-    assert(user_active(cID) == 0);
-    user_active(cID) = 1;
-    new_user_timing(1, cID) = cTime;
-    current_time = cTime;
-    slice_users{cSlice}(end + 1) = cID;
+    assert(userActive(cID) == 0);
+    userActive(cID) = 1;
+    newUserTiming(1, cID) = cTime;
+    currentTime = cTime;
+    sliceUsers{cSlice}(end + 1) = cID;
     % adjust weight allocation among users
-
     
-    user_weights =  get_weight_allocation(user_active, user_demands, shares, weight_strata, capacities, slice_users);
+    userWeights =  getweightallocation(userActive, userDemands, shares, ...
+        weightStrata, capacities, sliceUsers);
     % revoke all the departure event associated with current active
     % users
     % Inorder to update the remaining workload, use the previous user_rates
     % and the difference b/w last_time and cTime
     eid = 1;
-    while(eid <= size(event_list, 2))
-        if(strcmp(event_list{eid}.tag, 'departure') && user_active(event_list{eid}.userID) == 1)
+    while(eid <= size(eventList, 2))
+        if(strcmp(eventList{eid}.tag, 'departure') && ...
+                userActive(eventList{eid}.userID) == 1)
             % remove event_list{eid}
-            event_list = {event_list{1:(eid - 1)}, event_list{(eid + 1):end}};
+            eventList = {eventList{1:(eid - 1)}, eventList{(eid + 1):end}};
         else
             eid = eid + 1;
         end
     end 
     
     % According to the logic there should be no negative workloads
-    new_user_workloads = user_workloads - user_active .* user_rates * (cTime - last_time);
-    
-    % The initial guess is such that, all inactive users are set to 0 and
-    % all active users get something definitely surpasses the capacity.
-    init_guess = 10 * max(capacities) * ones(nUsers, 1);
-    init_guess = init_guess .* user_active';
-    [cRate, lambda] = maxmin_cached(user_types, user_weights, capacities, user_demands, cache);
+    newUserWorkloads = userWorkloads - userActive .* userRates ...
+        * (cTime - lastTime);
+    [cRate, lambda] = maxmincached(userTypes, userWeights, capacities, ...
+        userDemands, cache);
     %update rate allocation
-    new_user_rates = cRate';
+    newUserRates = cRate';
     assert(all(cRate >= 0));
     assert(all(cRate < inf));
     
     % Update/insert new departure events
     for cuser = 1:nUsers
-        if(user_active(cuser) == 1)
+        if(userActive(cuser) == 1)
             % Predict when it will be departing
-            estimate_departure_time = new_user_workloads(cuser) / ...
-                new_user_rates(cuser) + cTime;
-            assert(estimate_departure_time > 0)
+            estimateDepartureTime = newUserWorkloads(cuser) / ...
+                newUserRates(cuser) + cTime;
+            assert(estimateDepartureTime > 0)
             % Looking forward to seek for a place to insert
             inserted = false;
-            for eid = 1:size(event_list, 2)
-                if (event_list{eid}.time > estimate_departure_time)
-                    event.time = estimate_departure_time;
-                    event.type = user_types(cuser);
-                    event.slice = user_slices(cuser);
+            for eid = 1:size(eventList, 2)
+                if (eventList{eid}.time > estimateDepartureTime)
+                    event.time = estimateDepartureTime;
+                    event.type = userTypes(cuser);
+                    event.slice = userSlices(cuser);
                     event.tag = 'departure';
                     event.userID = cuser;
                     event.workload = 0;
-                    event_list = {event_list{1:(eid - 1)}, event, event_list{eid:end}};
+                    eventList = {eventList{1:(eid - 1)}, event, ...
+                        eventList{eid:end}};
                     inserted = true;
                     break;
                 end
             end
             if(~inserted)
                 % append to the end of the list
-                event.time = estimate_departure_time;
-                event.type = user_types(cuser);
-                event.slice = user_slices(cuser);
+                event.time = estimateDepartureTime;
+                event.type = userTypes(cuser);
+                event.slice = userSlices(cuser);
                 event.tag = 'departure';
                 event.userID = cuser;
                 event.workload = 0;
-                event_list{end + 1} = event;
+                eventList{end + 1} = event;
             end
         end
     end
     
-    current_time = cTime;
-    new_slice_users = slice_users;
+    currentTime = cTime;
+    newSliceUsers = sliceUsers;
 end
 
 if (strcmp(cEvent.tag, 'departure'))
@@ -114,20 +139,22 @@ if (strcmp(cEvent.tag, 'departure'))
     cType = cEvent.type;
     cSlice = cEvent.slice;
     cWL = cEvent.workload;
-    assert(user_active(cID) == 1);
-    user_active(cID) = 0;
-    new_user_timing(2, cID) = cTime;
+    assert(userActive(cID) == 1);
+    userActive(cID) = 0;
+    newUserTiming(2, cID) = cTime;
 
-    current_time = cTime;
+    currentTime = cTime;
     % Remove the current user from the slice_user set
-    for i = 1:size(slice_users{cSlice}, 2)
-        if(slice_users{cSlice}(i) == cID)
-            slice_users{cSlice} = slice_users{cSlice}([1:(i - 1), (i + 1):end]);
+    for i = 1:size(sliceUsers{cSlice}, 2)
+        if(sliceUsers{cSlice}(i) == cID)
+            sliceUsers{cSlice} = sliceUsers{cSlice}([1:(i - 1), ...
+                (i + 1):end]);
             break
         end
     end
     
-    user_weights = get_weight_allocation(user_active, user_demands, shares, weight_strata, capacities, slice_users);
+    userWeights = getweightallocation(userActive, userDemands, shares, ...
+        weightStrata, capacities, sliceUsers);
   
     % revoke all the departure event associated with current active
     % users
@@ -135,74 +162,73 @@ if (strcmp(cEvent.tag, 'departure'))
     % Inorder to update the remaining workload, use the previous user_rates
     % and the difference b/w last_time and cTime
     eid = 1;
-    while(eid <= size(event_list, 2))
-        if(strcmp(event_list{eid}.tag, 'departure') && user_active(event_list{eid}.userID) == 1)
+    while(eid <= size(eventList, 2))
+        if(strcmp(eventList{eid}.tag, 'departure') && ...
+                userActive(eventList{eid}.userID) == 1)
             % remove event_list{eid}
-            event_list = {event_list{1:(eid - 1)}, event_list{(eid + 1):end}};
+            eventList = {eventList{1:(eid - 1)}, eventList{(eid + 1):end}};
         else
             eid = eid + 1;
         end
     end 
     
     % According to the logic there should be no negative workloads
-    new_user_workloads = user_workloads - user_active .* user_rates * (cTime - last_time);
-    new_user_workloads(cID) = 0;
-    
-    % The initial guess is such that, all inactive users are set to 0 and
-    % all active users get something definitely surpasses the capacity.
-    init_guess = 10 * max(capacities) * ones(nUsers, 1);
-    init_guess = init_guess .* user_active';
+    newUserWorkloads = userWorkloads - userActive .* userRates * (cTime ...
+        - lastTime);
+    newUserWorkloads(cID) = 0;
     
     % if there is no active user at this time, there is no need to do
     % maxmin
-    if (sum(user_active) > 0)
-        [cRate, lambda] = maxmin_cached(user_types, user_weights, capacities, user_demands, cache);
+    if (sum(userActive) > 0)
+        [cRate, lambda] = maxmincached(userTypes, userWeights, ...
+            capacities, userDemands, cache);
     else
         cRate = zeros(nUsers, 1);
     end
     %update rate allocation
-    new_user_rates = cRate';
+    newUserRates = cRate';
     
     % Update/insert new departure events
     for cuser = 1:nUsers
-        if(user_active(cuser) == 1)
+        if(userActive(cuser) == 1)
             % Predict when it will be departing
-            estimate_departure_time = new_user_workloads(cuser) / ...
-                new_user_rates(cuser) + cTime;
-            assert(estimate_departure_time > 0)
+            estimateDepartureTime = newUserWorkloads(cuser) / ...
+                newUserRates(cuser) + cTime;
+            assert(estimateDepartureTime > 0)
             % Looking forward to seek for a place to insert
             inserted = false;
-            for eid = 1:size(event_list, 2)
-                if (event_list{eid}.time > estimate_departure_time)
-                    event.time = estimate_departure_time;
-                    event.type = user_types(cuser);
-                    event.slice = user_slices(cuser);
+            for eid = 1:size(eventList, 2)
+                if (eventList{eid}.time > estimateDepartureTime)
+                    event.time = estimateDepartureTime;
+                    event.type = userTypes(cuser);
+                    event.slice = userSlices(cuser);
                     event.tag = 'departure';
                     event.userID = cuser;
                     event.workload = 0;
-                    event_list = {event_list{1:(eid - 1)}, event, event_list{eid:end}};
+                    eventList = {eventList{1:(eid - 1)}, event, ...
+                        eventList{eid:end}};
                     inserted = true;
                     break;
                 end
             end
             if(~inserted)
                 % append to the end of the list
-                event.time = estimate_departure_time;
-                event.type = user_types(cuser);
-                event.slice = user_slices(cuser);
+                event.time = estimateDepartureTime;
+                event.type = userTypes(cuser);
+                event.slice = userSlices(cuser);
                 event.tag = 'departure';
                 event.userID = cuser;
                 event.workload = 0;
-                event_list{end + 1} = event;
+                eventList{end + 1} = event;
             end
         end
     end
     
-    current_time = cTime;
-    new_slice_users = slice_users;  
+    currentTime = cTime;
+    newSliceUsers = sliceUsers;  
 end
 
-new_user_active = user_active;
-new_event_list = event_list(2:end); %deque
+newUserActive = userActive;
+newEventList = eventList(2:end); %deque
 end
 
