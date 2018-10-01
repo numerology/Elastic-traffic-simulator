@@ -11,8 +11,8 @@ type_demands = [1 0 0.5 0 0 0;
                 0 0 0 0 1 0.5;
                 0 0 0.5 0 0 0.5]';
 duration = 200;
-relative_arrival_rates = [1 1 0.7 0 0 0; 
-                          0 0 0 1 1 0.7];
+relative_arrival_rates = [1 1 0.3 0 0 0; 
+                          0 0 0 1 1 0.3];
 verbose = 0;
 workloads = 1 * [1,1,1,1,1,1]';
 repetition = 500;
@@ -74,7 +74,7 @@ result_equal = nanmean(result_equal_mat, 1);
 figure()
 hold on 
 title('Normalized service rate under different shares')
-plot(result_equal(:,:,1), result_equal(:,:,2), 'b+-');
+plot(1./result_equal(:,:,1), 1./result_equal(:,:,2), 'b+-');
 xlabel('Slice 1');
 ylabel('Slice 2');
 %% Plot delay
