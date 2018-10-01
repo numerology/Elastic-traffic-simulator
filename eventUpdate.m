@@ -60,7 +60,7 @@ if (strcmp(cEvent.tag, 'arrival'))
     % all active users get something definitely surpasses the capacity.
     init_guess = 10 * max(capacities) * ones(nUsers, 1);
     init_guess = init_guess .* user_active';
-    [cRate, lambda] = maxmin_cached(user_active, user_types, user_weights, capacities, user_demands, init_guess, cache);
+    [cRate, lambda] = maxmin_cached(user_types, user_weights, capacities, user_demands, cache);
     %update rate allocation
     new_user_rates = cRate';
     assert(all(cRate >= 0));
@@ -156,7 +156,7 @@ if (strcmp(cEvent.tag, 'departure'))
     % if there is no active user at this time, there is no need to do
     % maxmin
     if (sum(user_active) > 0)
-        [cRate, lambda] = maxmin_cached(user_active, user_types, user_weights, capacities, user_demands, init_guess, cache);
+        [cRate, lambda] = maxmin_cached(user_types, user_weights, capacities, user_demands, cache);
     else
         cRate = zeros(nUsers, 1);
     end
