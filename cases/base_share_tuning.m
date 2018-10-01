@@ -1,3 +1,4 @@
+addpath('../');
 clear;
 capacities = ones(6,1);
 type_demands = [1 0 0.5 0 0 0; 
@@ -6,16 +7,17 @@ type_demands = [1 0 0.5 0 0 0;
                 0 0 0 1 0 0.5;
                 0 0 0 0 1 0.5;
                 0 0 0.5 0 0 0.5]';
-duration = 200;
+duration = 20;
 relative_arrival_rates = [1 1 0.7 0 0 0; 
                           0 0 0 1 1 0.7];
 %shares = [0.4 0.4 0.2]';
 verbose = 0;
 workloads = 1 * [1,1,1,1,1,1]';
-repetition = 500;
+repetition = 100;
 share_vec = [0.01 0.1 0.5 0.9 0.99];
 T = size(relative_arrival_rates, 2);
 V = 2;
+parpool;
 ppm = ParforProgMon('Progress 1:', repetition);
 
 % To prevent cofounding issue, need to separate the iteration for slice 1
@@ -105,4 +107,4 @@ for share = [0.01 0.09]
     title(strcat('Histogram of log delay for each slice under share_1 = ', num2str(share)));
     legend('slice 1', 'slice 2')
 end
-
+delete(gcp('nocreate'))
