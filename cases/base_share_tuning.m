@@ -1,3 +1,6 @@
+% Script to test the behavior of resource allocation under
+% SCPF weighting scheme and weighted maxmin
+% when share allocation among slices is tuned.
 addpath('../');
 clear;
 capacities = ones(6,1);
@@ -73,7 +76,6 @@ figure()
 hold on 
 title('Normalized service rate under different shares')
 plot(1./result_equal(:,:,1), 1./result_equal(:,:,2), 'b+-');
-
 %%
 for share = [0.01 0.09]
     delay_vec_1 = [];

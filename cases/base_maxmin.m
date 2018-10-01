@@ -1,3 +1,5 @@
+% Script to study mean delay under different
+% weighting schemes.
 clear;
 capacities = [1;1];
 type_demands = [.1 1;1 .1;1 1]';
