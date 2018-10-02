@@ -1,4 +1,4 @@
-function [sliceDelays, meanDelay, sliceDelaySamples] = getdelayunderdynamic...
+function [sliceDelays, sliceThroughputs, meanDelay, sliceDelaySamples] = getdelayunderdynamic...
     (duration, capacities, ... 
     typeDemands, workloads, weightStrata, shares, arrivalRates, verbose)
 % The function getting the average delay of different users under a dynamic 
@@ -66,6 +66,7 @@ sliceUsers = cell(1, V);
 lastTime = 0;
 
 reverseStr = '';
+initWorkLoads = userWorkloads;
 while(size(eventList, 2) > 0)
     % Update the event and do the allocation
     [newEventList, userRates, userWorkloads, userActive, ...
@@ -97,6 +98,7 @@ meanDelay = mean(userTiming(2, :) - userTiming(1, :));
 userArrivalTime = userTiming(1,:);
 userDepartureTime = userTiming(2, :);
 sliceDelays = zeros(1, V);
+sliceThroughputs = zeros(1, V);
 sliceDelaySamples = cell(1, V);
 
 for i = 1:V
@@ -104,6 +106,8 @@ for i = 1:V
     sliceDepartureTime = userDepartureTime(userSlices == i);
     sliceDelaySamples{i} = sliceDepartureTime - sliceArrivalTime;
     sliceDelays(i) = mean(sliceDelaySamples{i});
+    sliceThroughputs(i) = mean(initWorkLoads(userSlices == i) ...
+        ./ sliceDelaySamples{i});
 end
 
 
