@@ -17,34 +17,34 @@ function [ rate, lambda ] = maxmincached(userTypes, weights, capacities, ...
 % - lambda: redundant, keep for backward comaptibility.
 
 % First need to filter out the zeroes in the input
-non_zero_idx = find(weights);
-filtered_weights = weights(non_zero_idx);
+nonZeroIdx = find(weights);
+filteredWeights = weights(nonZeroIdx);
 % Adjust the order according to the order of user_weights
-[ordered_filtered_weights, weights_index] = sort(filtered_weights);
-[tmp, sort_back] = sort(weights_index);
-sorted_demands = demands(:, weights_index);
+[orderedFilteredWeights, weightsIndex] = sort(filteredWeights);
+[tmp, sortBack] = sort(weightsIndex);
+sortedDemands = demands(:, weightsIndex);
 
 T = max(userTypes);
-num_user_types = zeros(1,T);
+nUserTypes = zeros(1,T);
 for t = userTypes
-    num_user_types(t) = num_user_types(t) + 1;
+    nUserTypes(t) = nUserTypes(t) + 1;
 end
 
-key_generated = key_gen(num_user_types);
-if(cache.isKey(key_generated))
-    ordered_filtered_rate = cache(key_generated);
+keyGenerated = keygen(nUserTypes);
+if(cache.isKey(keyGenerated))
+    orderedFilteredRate = cache(keyGenerated);
     lambda = -1;
     %disp('cache hit');
 else
-    ordered_filtered_rate = maxminsolve(ordered_filtered_weights, ...
-        capacities, sorted_demands);
+    orderedFilteredRate = maxminsolve(orderedFilteredWeights, ...
+        capacities, sortedDemands);
     
-    assert(all(ordered_filtered_rate >= 0));
+    assert(all(orderedFilteredRate >= 0));
 end
 % change back to the original order
-filtered_rate = ordered_filtered_rate(sort_back);
+filtered_rate = orderedFilteredRate(sortBack);
 rate = zeros(size(weights))';
-rate(non_zero_idx) = filtered_rate;
+rate(nonZeroIdx) = filtered_rate;
 
 lambda = 1; % REDUNDANT, but want to mimic the behavior of fminimax for 
 % compatibility.

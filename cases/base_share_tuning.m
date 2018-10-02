@@ -4,20 +4,20 @@
 addpath('../');
 clear;
 capacities = ones(6,1);
-type_demands = [1 0 0.5 0 0 0; 
+typeDemands = [1 0 0.5 0 0 0; 
                 0 1 0.5 0 0 0; 
                 0 0 0.5 0 0 0.5; 
-                0 0 0 1 0 0.2;
-                0 0 0 0 1 0.8;
+                0 0 0 1 0 0.5;
+                0 0 0 0 1 0.5;
                 0 0 0.5 0 0 0.5]';
 duration = 200;
-relative_arrival_rates = [1 1 0.3 0 0 0; 
-                          0 0 0 0.7 0.7 0.6];
+relativeArrivalRates = [1 1 0.3 0 0 0; 
+                          0 0 0 1 1 0.3];
 verbose = 0;
 workloads = 1 * [1,1,1,1,1,1]';
-repetition = 500;
-share_vec = 0.1:0.1:0.9;
-T = size(relative_arrival_rates, 2);
+repetition = 400;
+shareVec = 0.1:0.1:0.9;
+T = size(relativeArrivalRates, 2);
 V = 2;
 gcp;
 ppm = ParforProgMon('Progress 1:', repetition);
@@ -25,95 +25,105 @@ ppm = ParforProgMon('Progress 1:', repetition);
 % To prevent cofounding issue, need to separate the iteration for slice 1
 % and 2
 %% 
-disp('testing SCPF weighting scheme. (equal weight)');
-result_equal_mat = zeros(repetition, size(share_vec, 2), V);
-delay_samples_1 = cell(repetition, V);
-delay_samples_2 = cell(repetition, V);
+disp('testing equal weight alloc');
+delayEqualMat = zeros(repetition, size(shareVec, 2), V);
+throughputEqualMat = zeros(repetition, size(shareVec, 2), V);
+delaySamples1 = cell(repetition, V);
+delaySamples2 = cell(repetition, V);
 parfor i = 1:repetition
-    result_equal = zeros(size(share_vec, 2), V);
-    for share_1 = share_vec
-        [slice_delay, mean_delay, slice_delay_samples] = getdelayunderdynamic(duration, capacities, ...
-            type_demands, workloads, 'equal', [share_1, 1 - share_1]', ...
-            0.4 * relative_arrival_rates, verbose);
-        result_equal(share_vec == share_1, :) =  slice_delay;
-        if (share_1 == share_vec(1))
-            delay_samples_1{i, 1} = slice_delay_samples{1};
+    delayEqual = zeros(size(shareVec, 2), V);
+    throughputEqual = zeros(size(shareVec, 2), V);
+    for share_1 = shareVec
+        [sliceDelay, sliceRates, meanDelay, sliceDelaySamples] = ...
+            getdelayunderdynamic(duration, capacities, ...
+            typeDemands, workloads, 'equal', [share_1, 1 - share_1]', ...
+            0.4 * relativeArrivalRates, verbose);
+        delayEqual(shareVec == share_1, :) =  sliceDelay;
+        throughputEqual(shareVec == share_1, :) = sliceRates;
+        if (share_1 == shareVec(1))
+            delaySamples1{i, 1} = sliceDelaySamples{1};
         end
-        if (share_1 == share_vec(end))
-            delay_samples_2{i, 1} = slice_delay_samples{1};
+        if (share_1 == shareVec(end))
+            delaySamples2{i, 1} = sliceDelaySamples{1};
         end
     end
     ppm.increment();
-    result_equal_mat(i, :, 1) = result_equal(:, 1);
+    delayEqualMat(i, :, 1) = delayEqual(:, 1);
+    throughputEqualMat(i, :, 1) = throughputEqual(:, 1);
 end
 
 
 
 ppm2 = ParforProgMon('Progress 2:', repetition);
 parfor i = 1:repetition
-    result_equal = zeros(size(share_vec, 2), V);
-    for share_1 = share_vec
-        [slice_delay, mean_delay, slice_delay_samples] = getdelayunderdynamic(duration, capacities, ...
-            type_demands, workloads, 'equal', [share_1, 1 - share_1]', ...
-            0.4 * relative_arrival_rates, verbose);
-        result_equal(share_vec == share_1, :) =  slice_delay;
-        if (share_1 == share_vec(1))
-            delay_samples_1{i, 2} = slice_delay_samples{2};
+    delayEqual = zeros(size(shareVec, 2), V);
+    throughputEqual = zeros(size(shareVec, 2), V);
+    for share_1 = shareVec
+        [sliceDelay, sliceRates, meanDelay, sliceDelaySamples] = getdelayunderdynamic(duration, capacities, ...
+            typeDemands, workloads, 'equal', [share_1, 1 - share_1]', ...
+            0.4 * relativeArrivalRates, verbose);
+        delayEqual(shareVec == share_1, :) =  sliceDelay;
+        throughputEqual(shareVec == share_1, :) = sliceRates;
+        if (share_1 == shareVec(1))
+            delaySamples1{i, 2} = sliceDelaySamples{2};
         end
-        if (share_1 == share_vec(end))
-            delay_samples_2{i, 2} = slice_delay_samples{2};
+        if (share_1 == shareVec(end))
+            delaySamples2{i, 2} = sliceDelaySamples{2};
         end
     end
     ppm2.increment();
-    result_equal_mat(i, :, 2) = result_equal(:, 2);
+    delayEqualMat(i, :, 2) = delayEqual(:, 2);
+    throughputEqualMat(i, :, 2) = throughputEqual(:, 2);
 end
 
-result_equal = nanmean(result_equal_mat, 1);
+delayEqual = nanmean(delayEqualMat, 1);
+throughputEqual = nanmean(throughputEqualMat, 1);
 
 %% Plot normalized service rate
 figure()
 hold on 
-title('Normalized log service rate under different shares')
-plot(1./result_equal(:,:,1), 1./result_equal(:,:,2), 'b+-');
+title('Normalized service rate under different shares')
+plot(throughputEqual(:,:,1), throughputEqual(:,:,2), 'b+-');
 xlabel('Slice 1');
 ylabel('Slice 2');
 %% Plot delay
 figure()
 hold on 
 title('Mean delay under different shares')
-plot(result_equal(:,:,1), result_equal(:,:,2), 'b+-');
+plot(delayEqual(:,:,1), delayEqual(:,:,2), 'b+-');
 xlabel('Slice 1');
 ylabel('Slice 2');
 %%
-for share = [share_vec(1) share_vec(end)]
-    delay_vec_1 = [];
+for share = [shareVec(1) shareVec(end)]
+    delayVec1 = [];
     for i = 1:repetition
-        if (share == share_vec(1))
-            delay_vec_1 = [delay_vec_1 delay_samples_1{i, 1}];
+        if (share == shareVec(1))
+            delayVec1 = [delayVec1 delay_samples_1{i, 1}];
         end
-        if (share == share_vec(end))
-            delay_vec_1 = [delay_vec_1 delay_samples_2{i, 1}];
+        if (share == shareVec(end))
+            delayVec1 = [delayVec1 delay_samples_2{i, 1}];
         end
     end
 
-    delay_vec_2 = [];
+    delayVec2 = [];
     for i = 1:repetition
-        if (share == share_vec(1))
-            delay_vec_2 = [delay_vec_2 delay_samples_1{i, 2}];
+        if (share == shareVec(1))
+            delayVec2 = [delayVec2 delay_samples_1{i, 2}];
         end
-        if (share == share_vec(end))
-            delay_vec_2 = [delay_vec_2 delay_samples_2{i, 2}];
+        if (share == shareVec(end))
+            delayVec2 = [delayVec2 delay_samples_2{i, 2}];
         end
     end
     
     disp(strcat('Under share 1 = ', num2str(share)))
-    mean_log_delay_1 = mean(log(delay_vec_1))
-    mean_log_delay_2 = mean(log(delay_vec_2))
+    meanLogDelay_1 = mean(log(delayVec1))
+    meanLogDelay_2 = mean(log(delayVec2))
     
     figure()
-    histogram(log(delay_vec_1),30);
+    histogram(log(delayVec1),30);
     hold on
-    histogram(log(delay_vec_2),30);
-    title(strcat('Histogram of log delay for each slice under share_1 = ', num2str(share)));
+    histogram(log(delayVec2),30);
+    title(strcat('Histogram of log delay for each slice under share_1 = ', ...
+        num2str(share)));
     legend('slice 1', 'slice 2')
 end

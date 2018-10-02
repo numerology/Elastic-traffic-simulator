@@ -1,5 +1,5 @@
-function [ flag, remaining ] = isFinished( indices, queues )
-%Determine whether there is still some elements to merge
+function [ flag, remaining ] = isfinished( indices, queues )
+% Determine whether there is still some elements to merge
 %   Params:
 %    indices: current ending indices for each queue
 %    queues: cell of lists of arrival times for each v x t.

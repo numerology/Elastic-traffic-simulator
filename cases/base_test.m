@@ -8,13 +8,13 @@ addpath('../');
 clear;
 capacities = ones(1,1);
 typeDemands = [1;1]';
-duration = 100;
+duration = 200;
 relativeArrivalRates = [1 0; 
                           0 1];
 verbose = 0;
 workloads = 1 * [1,1]';
-repetition = 200;
-shareVec = 0.1:0.1:0.9;
+repetition = 800;
+shareVec = [0.001 0.01 0.05 0.1:0.1:0.9 0.95 0.99 0.999];
 T = size(relativeArrivalRates, 2);
 V = 2;
 gcp;
@@ -120,6 +120,7 @@ for share = [shareVec(1) shareVec(end)]
     histogram(log(delayVec1),30);
     hold on
     histogram(log(delayVec2),30);
-    title(strcat('Histogram of log delay for each slice under share_1 = ', num2str(share)));
+    title(strcat('Histogram of log delay for each slice under share_1 ...= ', ...
+        num2str(share)));
     legend('slice 1', 'slice 2')
 end

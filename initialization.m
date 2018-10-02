@@ -1,11 +1,11 @@
-function [ event_lists, user_demands, user_types, user_slices ] = initialization( arrival_rates, ...
-    duration, workloads, type_demands, verbose)
+function [ eventLists, userDemands, userTypes, userSlices ] = ...
+    initialization( arrivalRates, duration, workloads, typeDemands, verbose)
 %Generate the intial event queue
 %   Detailed explanation goes here
-[V, T] = size(arrival_rates);
-B = size(type_demands, 1);
+[V, T] = size(arrivalRates);
+B = size(typeDemands, 1);
 % for each type x slice, generate the series of arrival times
-arrival_time = cell(V, T);
+arrivalTime = cell(V, T);
 if(verbose > 0)
     fprintf('\n');
     disp('Generating arrival times')
@@ -13,29 +13,29 @@ end
 for v = 1:V
     for t = 1:T
         ctt = 0;
-        arrival_time_vt = [];
-        if (arrival_rates(v, t) == 0)
+        arrivalTimeVt = [];
+        if (arrivalRates(v, t) == 0)
             continue % Otherwise get stuck
         end
         while(ctt <= duration)
-            ctt = ctt + exprnd(1/arrival_rates(v, t));   
+            ctt = ctt + exprnd(1/arrivalRates(v, t));   
             if(ctt <= duration)
-                arrival_time_vt = [arrival_time_vt, ctt];
+                arrivalTimeVt = [arrivalTimeVt, ctt];
             end
 
         end
-        arrival_time{v,t} = arrival_time_vt;
+        arrivalTime{v,t} = arrivalTimeVt;
     end
 end
 if(verbose > 0)
     disp('Finish generating arrival times')
 end
 % merge lists to form an event queue
-event_lists = {};
+eventLists = {};
 % indices for current arrival time for each v x t.
 idxs = ones(1, V*T);
 
-[flag, remaining_idx] = isFinished(idxs, arrival_time);
+[flag, remainingIdx] = isFinished(idxs, arrivalTime);
 id_cnt = 1;
 
 if(verbose > 0)
@@ -47,9 +47,9 @@ while(flag)
     v = -1;
     t = -1;
     minidx = -1;
-    for idx = remaining_idx
-        if(arrival_time{idx}(idxs(idx)) < minimalt)
-            minimalt = arrival_time{idx}(idxs(idx));
+    for idx = remainingIdx
+        if(arrivalTime{idx}(idxs(idx)) < minimalt)
+            minimalt = arrivalTime{idx}(idxs(idx));
             v = mod(idx - 1, V) + 1;
             t = floor((idx - 1)/V) + 1;
             minidx = idx;
@@ -62,26 +62,26 @@ while(flag)
     event.tag = 'arrival';
     event.userID = id_cnt;
     event.workload = exprnd(workloads(t));
-    event_lists{end + 1} = event;  
+    eventLists{end + 1} = event;  
     
     idxs(minidx) = idxs(minidx) + 1;
     id_cnt = id_cnt + 1;
     
-    [flag, remaining_idx] = isFinished(idxs, arrival_time);
+    [flag, remainingIdx] = isFinished(idxs, arrivalTime);
 end
 if(verbose > 0)
     disp('Finish merging arrival times')
 end
 
-nUsers = size(event_lists, 2);
+nUsers = size(eventLists, 2);
 % Need to establish the big user_demands matrix, of B x U
-user_demands = zeros(B, nUsers);
-user_types = zeros(1, nUsers);
-user_slices = zeros(1, nUsers);
+userDemands = zeros(B, nUsers);
+userTypes = zeros(1, nUsers);
+userSlices = zeros(1, nUsers);
 for u = 1:nUsers
-    user_demands(:, u) = type_demands(:, event_lists{u}.type);
-    user_types(u) = event_lists{u}.type;
-    user_slices(u) = event_lists{u}.slice;
+    userDemands(:, u) = typeDemands(:, eventLists{u}.type);
+    userTypes(u) = eventLists{u}.type;
+    userSlices(u) = eventLists{u}.slice;
 end
 
 end
