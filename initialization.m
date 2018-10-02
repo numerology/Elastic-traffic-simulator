@@ -35,7 +35,7 @@ eventLists = {};
 % indices for current arrival time for each v x t.
 idxs = ones(1, V*T);
 
-[flag, remainingIdx] = isFinished(idxs, arrivalTime);
+[flag, remainingIdx] = isfinished(idxs, arrivalTime);
 id_cnt = 1;
 
 if(verbose > 0)
@@ -67,7 +67,7 @@ while(flag)
     idxs(minidx) = idxs(minidx) + 1;
     id_cnt = id_cnt + 1;
     
-    [flag, remainingIdx] = isFinished(idxs, arrivalTime);
+    [flag, remainingIdx] = isfinished(idxs, arrivalTime);
 end
 if(verbose > 0)
     disp('Finish merging arrival times')
