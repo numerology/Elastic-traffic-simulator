@@ -6,3 +6,5 @@ cases/base4.m
 cases/base5.m
 cases/base6.m
 *.asv
+cases/base_test.m
+*.mat
