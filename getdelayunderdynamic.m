@@ -2,7 +2,7 @@ function [sliceDelays, sliceThroughputs, meanDelay, sliceDelaySamples] = getdela
     (duration, capacities, ... 
     typeDemands, workloads, weightStrata, shares, arrivalRates, verbose)
 % The function getting the average delay of different users under a dynamic 
-% setting.
+% setting. The rate allocation is according to proportionally fair.
 % --------------------------------
 % Parameters:
 % --------------------------------

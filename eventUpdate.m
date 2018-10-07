@@ -4,7 +4,7 @@ function [newEventList, newUserRates, newUserWorkloads, ...
     userActive, weightStrata, userTiming, sliceUsers, shares, ...
     capacities, userDemands, lastTime, userTypes, userSlices, cache)
 % Update the configuration according to the first/earliest event in the
-% event queue.
+% event queue. The rate allocation is according to proportionally fair.
 % --------------------------------
 % Parameters:
 % --------------------------------

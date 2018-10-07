@@ -8,3 +8,5 @@ cases/base6.m
 *.asv
 cases/base_test.m
 *.mat
+cases/treenet.m
+cases/base_test.m

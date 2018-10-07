@@ -10,10 +10,10 @@ capacities = ones(1,1);
 typeDemands = [1;1]';
 duration = 200;
 relativeArrivalRates = [1 0; 
-                          0 0.5];
+                          0 1];
 verbose = 0;
-workloads = 1 * [1,2]';
-repetition = 800;
+workloads = 1 * [1,1]';
+repetition = 1000;
 shareVec = [0.001 0.01 0.05 0.1:0.1:0.9 0.95 0.99 0.999];
 T = size(relativeArrivalRates, 2);
 V = 2;
@@ -35,13 +35,13 @@ parfor i = 1:repetition
         [sliceDelay, sliceRates, meanDelay, sliceDelaySamples] = ...
             getdelayunderdynamic(duration, capacities, ...
             typeDemands, workloads, 'equal', [share_1, 1 - share_1]', ...
-            0.4 * relativeArrivalRates, verbose);
+            0.3 * relativeArrivalRates, verbose);
         delayEqual(shareVec == share_1, :) =  sliceDelay;
         throughputEqual(shareVec == share_1, :) = sliceRates;
         if (share_1 == shareVec(1))
             delaySamples1{i, 1} = sliceDelaySamples{1};
         end
-        if (share_1 == shareVec(end))
+        if (share_1 == 0.5)
             delaySamples2{i, 1} = sliceDelaySamples{1};
         end
     end
@@ -59,13 +59,13 @@ parfor i = 1:repetition
     for share_1 = shareVec
         [sliceDelay, sliceRates, meanDelay, sliceDelaySamples] = getdelayunderdynamic(duration, capacities, ...
             typeDemands, workloads, 'equal', [share_1, 1 - share_1]', ...
-            0.4 * relativeArrivalRates, verbose);
+            0.3 * relativeArrivalRates, verbose);
         delayEqual(shareVec == share_1, :) =  sliceDelay;
         throughputEqual(shareVec == share_1, :) = sliceRates;
         if (share_1 == shareVec(1))
             delaySamples1{i, 2} = sliceDelaySamples{2};
         end
-        if (share_1 == shareVec(end))
+        if (share_1 == 0.5)
             delaySamples2{i, 2} = sliceDelaySamples{2};
         end
     end
@@ -83,6 +83,13 @@ title('Normalized service rate under different shares')
 plot(throughputEqual(:,:,1), throughputEqual(:,:,2), 'b+-');
 xlabel('Slice 1');
 ylabel('Slice 2');
+%% Plot normalized service rate
+figure()
+hold on 
+title('Inversed mean delay under different shares')
+plot(1./delayEqual(:,:,1), 1./delayEqual(:,:,2), 'b+-');
+xlabel('Slice 1');
+ylabel('Slice 2');
 %% Plot delay
 figure()
 hold on 
@@ -91,13 +98,13 @@ plot(delayEqual(:,:,1), delayEqual(:,:,2), 'b+-');
 xlabel('Slice 1');
 ylabel('Slice 2');
 %%
-for share = [shareVec(1) shareVec(end)]
+for share = [shareVec(1) 0.5]
     delayVec1 = [];
     for i = 1:repetition
         if (share == shareVec(1))
             delayVec1 = [delayVec1 delaySamples1{i, 1}];
         end
-        if (share == shareVec(end))
+        if (share == 0.5)
             delayVec1 = [delayVec1 delaySamples2{i, 1}];
         end
     end
@@ -107,7 +114,7 @@ for share = [shareVec(1) shareVec(end)]
         if (share == shareVec(1))
             delayVec2 = [delayVec2 delaySamples1{i, 2}];
         end
-        if (share == shareVec(end))
+        if (share == 0.5)
             delayVec2 = [delayVec2 delaySamples2{i, 2}];
         end
     end

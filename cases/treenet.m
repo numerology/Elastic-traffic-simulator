@@ -13,7 +13,7 @@
 % children, then how bottlenecks are distributed is of interest.
 addpath('../');
 clear;
-capacities = [6 2 2 2 1 1 1 1 1 1]';
+capacities = [5 1.8 1.8 1.8 1 1 1 1 1 1]';
 typeDemands = [1 1 0 0 1 0 0 0 0 0;
                1 1 0 0 0 1 0 0 0 0;
                1 0 1 0 0 0 1 0 0 0;
@@ -25,7 +25,7 @@ relativeArrivalRates = [1 1 1 0 0 0;
                         0 0 0 1 1 1];
 verbose = 0;
 workloads = 1 * [1,1,1,1,1,1]';
-repetition = 100;
+repetition = 400;
 shareVec = 0.1:0.1:0.9;
 T = size(relativeArrivalRates, 2);
 V = 2;
