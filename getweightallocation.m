@@ -1,8 +1,38 @@
 function [ userWeights ] = getweightallocation( userActive, userDemands, ...
     shares, weightStrata, capacities, sliceUsers )
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+% Function that returns user level weight allocation.
+% --------------------------------
+% Parameters:
+% --------------------------------
+% userActive: flag vector marking active users, userActive(i) = 1 if user i
+% is active. 1 x nUser
+% userDemands: resource demand vector of users, R x nUser
+% shares: share allocation among slices, 1 x V
+% weightStrata: string of weighting scheme
+% capacities: capacity of each resource, B x 1
+% sliceUsers: cell arrays of user set of each slice.
+% --------------------------------
+% Ret:
+% --------------------------------
+% userWeights: weight of each user, 1 x nUser
+
 V = size(shares, 1);
+
+% weight allocation corresponds to processor sharing, each active user gets the
+% same amount of weight.
+if(strcmp(weightStrata, 'ps'))
+    userWeights = userActive ./ sum(userActive);
+end
+
+% weight allocation corresponds to discrimnatory processor sharing, slices are
+% not protected against each other
+if(strcmp(weightStrata, 'dps'))
+    userWeights = userActive;
+    for v = 1:V
+        userWeights(sliceUsers{v}) = userWeights(sliceUsers{v}) * shares(v);
+    end
+end
+
 if(strcmp(weightStrata, 'equal'))
     userWeights = userActive;
     for v = 1:V
