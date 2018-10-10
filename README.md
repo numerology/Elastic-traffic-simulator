@@ -12,9 +12,12 @@ of SCPF when resource demands of each user/flow is used to differentiate users/f
 2. Dominant resource fairness (DRF), 
 [Dominant Resource Fairness: Fair Allocation of Multiple Resource Types,
 A. Ghodsi, et al.](https://cs.stanford.edu/~matei/papers/2011/nsdi_drf.pdf)
-3. TODO: Bottleneck maximal fairness (BMF),
+3. ~~TODO: Bottleneck maximal fairness (BMF)~~,
 [Multi-resource fairness: Objectives, algorithms and performance, T. Bonarld,
 et al.](https://arxiv.org/abs/1410.0782).
+Won't do due to complexity.
+4. Processor sharing.
+5. Discriminatory processor sharing.
 
 ## System model:
 We are simulating a queueing networks. Take cellular network as an example. It consists
