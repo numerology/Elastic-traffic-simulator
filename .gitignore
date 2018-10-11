@@ -10,4 +10,4 @@ cases/base_test.m
 *.mat
 cases/treenet.m
 cases/base_test.m
-scpf_against_others.m
+cases/scpf_against_others.m

@@ -2,14 +2,19 @@
 % Very simple setting is adopted.
 addpath('../');
 clear;
-capacities = ones(1,1);
-typeDemands = [1;1]';
+capacities = [5 1.8 1.8 1.8 1 1 1 1 1 1]';
+typeDemands = [1 1 0 0 1 0 0 0 0 0;
+               1 1 0 0 0 1 0 0 0 0;
+               1 0 1 0 0 0 1 0 0 0;
+               1 0 1 0 0 0 0 1 0 0;
+               1 0 0 1 0 0 0 0 1 0;
+               1 0 0 1 0 0 0 0 0 1]';
 duration = 100;
-relativeArrivalRates = 0.08 * [1 0; 
-                              0 1]; % constant is to prevent overflow.
+relativeArrivalRates = 0.3 * [1 1 1 0 0 0; 
+                              0 0 0 1 1 1];
 verbose = 0;
-workloads = 1 * [1,10]';
-repetition = 50000;
+workloads = 1 * [1,1,1,1,1,1]';
+repetition = 2000;
 shareVec = 0.1:0.05:0.9;
 T = size(relativeArrivalRates, 2);
 V = 2;
