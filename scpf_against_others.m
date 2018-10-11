@@ -5,11 +5,11 @@ clear;
 capacities = ones(1,1);
 typeDemands = [1;1]';
 duration = 100;
-relativeArrivalRates = [1 0; 
-                        0 1];
+relativeArrivalRates = 0.08 * [1 0; 
+                              0 1]; % constant is to prevent overflow.
 verbose = 0;
-workloads = 1 * [1,1]';
-repetition = 1000;
+workloads = 1 * [1,10]';
+repetition = 50000;
 shareVec = 0.1:0.05:0.9;
 T = size(relativeArrivalRates, 2);
 V = 2;
@@ -31,7 +31,7 @@ parfor i = 1:repetition
         [sliceDelay, sliceRates, meanDelay, sliceDelaySamples] = ...
             getdelayunderdynamic(duration, capacities, ...
             typeDemands, workloads, 'equal', [share_1, 1 - share_1]', ...
-            0.4 * relativeArrivalRates, verbose);
+            relativeArrivalRates, verbose);
         delayEqual(shareVec == share_1, :) =  sliceDelay;
         throughputEqual(shareVec == share_1, :) = sliceRates;
         if (share_1 == shareVec(1))
@@ -54,7 +54,7 @@ parfor i = 1:repetition
         [sliceDelay, sliceRates, meanDelay, sliceDelaySamples] = ...
             getdelayunderdynamic(duration, capacities, ...
             typeDemands, workloads, 'equal', [share_1, 1 - share_1]', ...
-            0.4 * relativeArrivalRates, verbose);
+            relativeArrivalRates, verbose);
         delayEqual(shareVec == share_1, :) =  sliceDelay;
         throughputEqual(shareVec == share_1, :) = sliceRates;
         if (share_1 == shareVec(1))
@@ -72,7 +72,7 @@ end
 delayEqual = nanmean(delayEqualMat, 1);
 throughputEqual = nanmean(throughputEqualMat, 1);
 %% 
-disp('testing equal weight alloc');
+disp('testing dps alloc');
 ppm3 = ParforProgMon('For DPS progress 1: ', repetition);
 delayPsMat = zeros(repetition, size(shareVec, 2), V);
 throughputPsMat = zeros(repetition, size(shareVec, 2), V);
@@ -84,7 +84,7 @@ parfor i = 1:repetition
         [sliceDelay, sliceRates, meanDelay, sliceDelaySamples] = ...
             getdelayunderdynamic(duration, capacities, ...
             typeDemands, workloads, 'dps', [share_1, 1 - share_1]', ...
-            0.4 * relativeArrivalRates, verbose);
+            relativeArrivalRates, verbose);
         delayPs(shareVec == share_1, :) =  sliceDelay;
         throughputPs(shareVec == share_1, :) = sliceRates;
     end
@@ -101,7 +101,7 @@ parfor i = 1:repetition
         [sliceDelay, sliceRates, meanDelay, sliceDelaySamples] = ...
             getdelayunderdynamic(duration, capacities, ...
             typeDemands, workloads, 'dps', [share_1, 1 - share_1]', ...
-            0.4 * relativeArrivalRates, verbose);
+            relativeArrivalRates, verbose);
         delayPs(shareVec == share_1, :) =  sliceDelay;
         throughputPs(shareVec == share_1, :) = sliceRates;
     end
@@ -165,11 +165,11 @@ for share = [shareVec(1) 0.5]
     mean_log_delay_1 = mean(log(delayVec1))
     mean_log_delay_2 = mean(log(delayVec2))
     
-    figure()
-    histogram(log(delayVec1),30);
-    hold on
-    histogram(log(delayVec2),30);
-    title(strcat('Histogram of log delay for each slice under share_1 ...= ', ...
-        num2str(share)));
-    legend('slice 1', 'slice 2')
+%     figure()
+%     histogram(log(delayVec1),30);
+%     hold on
+%     histogram(log(delayVec2),30);
+%     title(strcat('Histogram of log delay for each slice under share_1 ...= ', ...
+%         num2str(share)));
+%     legend('slice 1', 'slice 2')
 end

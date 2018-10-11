@@ -30,6 +30,7 @@ if(strcmp(weightStrata, 'dps'))
     userWeights = userActive;
     for v = 1:V
         userWeights(sliceUsers{v}) = userWeights(sliceUsers{v}) * shares(v);
+        userWeights = userWeights./sum(userWeights);
     end
 end
 
