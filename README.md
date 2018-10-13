@@ -15,7 +15,8 @@ A. Ghodsi, et al.](https://cs.stanford.edu/~matei/papers/2011/nsdi_drf.pdf)
 3. ~~TODO: Bottleneck maximal fairness (BMF)~~,
 [Multi-resource fairness: Objectives, algorithms and performance, T. Bonarld,
 et al.](https://arxiv.org/abs/1410.0782).
-Won't do due to complexity.
+Won't do due to complexity. Also, it is possible that such allocation 
+does not exist in certain network topology and configuration.
 4. Processor sharing.
 5. Discriminatory processor sharing.
 
