@@ -4,11 +4,11 @@ addpath('../');
 clear;
 %capacities = [5 1.8 1.8 1.8 1 1 1 1 1 1]';
 capacities = [1 1 1 1]';
-typeDemands = [2 2 0 0;
-               0 1 1 0;
-               0 0 2 2;
-               1 0 0 1;
-               1 0 0 0;
+typeDemands = [2 0.5 0 0;
+               0 1 1.2 0;
+               0 0 2 1;
+               1 0 0 0.8;
+               0.8 0 0 0;
                0 0.5 0 0;
                0 0 1 0;
                0 0 0 2]';
@@ -26,7 +26,7 @@ relativeArrivalRates = 0.18 * [1 1 1 1 0 0 0 0;
 
 verbose = 0;
 workloads = 1 * [1,1,1,1,1,1,1,1]';
-repetition = 1000;
+repetition = 1200;
 shareVec = 0.1:0.1:0.9;
 T = size(relativeArrivalRates, 2);
 V = 2;
@@ -41,7 +41,7 @@ delayEqualMat = zeros(repetition, size(shareVec, 2), V);
 throughputEqualMat = zeros(repetition, size(shareVec, 2), V);
 delaySamples1 = cell(repetition, V);
 delaySamples2 = cell(repetition, V);
-parfor i = 1:repetition
+for i = 1:repetition
     delayEqual = zeros(size(shareVec, 2), V);
     throughputEqual = zeros(size(shareVec, 2), V);
     for share_1 = shareVec
@@ -64,7 +64,7 @@ parfor i = 1:repetition
 end
 
 ppm2 = ParforProgMon('For scpf progress 2: ', repetition);
-parfor i = 1:repetition
+for i = 1:repetition
     delayEqual = zeros(size(shareVec, 2), V);
     throughputEqual = zeros(size(shareVec, 2), V);
     for share_1 = shareVec
@@ -94,7 +94,7 @@ ppm3 = ParforProgMon('For DPS progress 1: ', repetition);
 delayPsMat = zeros(repetition, size(shareVec, 2), V);
 throughputPsMat = zeros(repetition, size(shareVec, 2), V);
 
-parfor i = 1:repetition
+for i = 1:repetition
     delayPs = zeros(size(shareVec, 2), V);
     throughputPs = zeros(size(shareVec, 2), V);
     for share_1 = shareVec
@@ -109,9 +109,9 @@ parfor i = 1:repetition
     delayPsMat(i, :, 1) = delayPs(:, 1);
     throughputPsMat(i, :, 1) = throughputPs(:, 1);
 end
-
+%%
 ppm4 = ParforProgMon('For DPS progress 2: ', repetition);
-parfor i = 1:repetition
+for i = 1:repetition
     delayPs = zeros(size(shareVec, 2), V);
     throughputPs = zeros(size(shareVec, 2), V);
     for share_1 = shareVec

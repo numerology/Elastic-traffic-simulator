@@ -12,4 +12,3 @@ cases/treenet.m
 cases/base_test.m
 cases/scpf_against_others.m
 *.l
-*.slx
