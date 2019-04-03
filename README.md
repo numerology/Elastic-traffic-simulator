@@ -35,6 +35,12 @@ Each flows carries an exponentially distributed random workload, and arrives as 
 Poisson process. It leaves the system after its workload is finished by its perceived
 rate.
 
+## References:
+If you use this project please kindly cite this paper:
+
+Jiaxiao Zheng and Gustavo de Veciana, Elastic Multi-resource Network Slicing: Can Protection Lead to Improved
+Performance?, WiOpt'19, 2019.
+
 ## Acknowledgement:
 The progressive bar for parallel processing in Matlab is by DylanMuir 
 [ParforProgMon](https://github.com/DylanMuir/ParforProgMon).
